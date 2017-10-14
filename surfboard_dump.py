@@ -2,6 +2,7 @@
 import sys
 import requests
 import json
+import pprint
 from datetime import datetime
 from bs4 import BeautifulSoup
 from elasticsearch import Elasticsearch
@@ -15,7 +16,7 @@ this_run_ts_millis = (this_run_ts - epoch).total_seconds() * 1000.0
 def ExtractStringList(session, url, sl):
     fields = {}
     response = session.get(url)
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response.text, 'html.parser')
     for line in soup.body.get_text().split('\n'):
         for needle in sl:
             if needle in line:
@@ -28,7 +29,16 @@ def ExtractStringList(session, url, sl):
 #  Returns a dict comprised key:values from tables on the page
 def ExtractFromTables(session, url):
     fields = {}
-    
+    response = session.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    for table in soup.findAll('table'):
+        for tr in table.findAll('tr'):
+            td=tr.findAll('td')
+            # This looks like a key:value pair
+            if len(td) == 2:
+                key = td[0].get_text().strip()
+                value = td[1].get_text().strip()
+                fields[key] = value
     return fields
 
 
@@ -42,9 +52,9 @@ def main():
 
     # Grab from the Help page
     fields.update(ExtractStringList(s,'http://192.168.100.1/cmHelpData.htm', ['Model Name','Vendor Name', 'Firmware Name', 'Boot Version', 'Hardware Version', 'Serial Nu    mber', 'Firmware Build Time']))
-
-    print fields
+    fields.update(ExtractFromTables(s, 'http://192.168.100.1/indexData.htm'))
     s.close()
+    pprint.pprint(fields)
     # We are going to store our results in Elasticsearch.
     #es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
 
