@@ -51,8 +51,10 @@ def main():
 
 
     # Grab from the Help page
-    fields.update(ExtractStringList(s,'http://192.168.100.1/cmHelpData.htm', ['Model Name','Vendor Name', 'Firmware Name', 'Boot Version', 'Hardware Version', 'Serial Nu    mber', 'Firmware Build Time']))
-    fields.update(ExtractFromTables(s, 'http://192.168.100.1/indexData.htm'))
+    fields.update(ExtractStringList(s,'http://192.168.100.1/cmHelpData.htm', ['Model Name','Vendor Name', 'Firmware Name', 'Boot Version', 'Hardware Version', 'Serial Number', 'Firmware Build Time']))
+    table_pulls = ['http://192.168.100.1/indexData.htm', 'http://192.168.100.1/cmAddressData.htm', 'http://192.168.100.1/cmConfigData.htm','http://192.168.100.1/cmOpenSourceData.htm']
+    for url in table_pulls:
+        fields.update(ExtractFromTables(s, url))
     s.close()
     pprint.pprint(fields)
     # We are going to store our results in Elasticsearch.
