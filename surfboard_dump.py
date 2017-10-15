@@ -20,7 +20,6 @@ PUT surfboard6141
 import sys
 import requests
 import json
-import pprint
 from datetime import datetime
 from bs4 import BeautifulSoup
 from elasticsearch import Elasticsearch
@@ -212,7 +211,6 @@ def main():
     epoch = datetime.utcfromtimestamp(0)
     this_run_ts = datetime.now()
     this_run_ts_millis = int((this_run_ts - epoch).total_seconds() * 1000.0)
-    print this_run_ts_millis
     # This is a dictionary to compile the stuff we will end up sending up to elasticsearch
     fields = {}
     fields['timestamp'] = this_run_ts_millis
