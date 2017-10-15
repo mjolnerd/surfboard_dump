@@ -1,4 +1,22 @@
 #!/usr/bin/env python
+
+'''
+Map this using:
+PUT surfboard6141
+{
+  "mappings": {
+    "stats":{
+      "properties": {
+        "timestamp":{
+          "type": "date",
+          "format": "epoch_millis"
+        }
+      }
+    }
+  }
+}
+'''
+
 import sys
 import requests
 import json
@@ -7,9 +25,6 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from elasticsearch import Elasticsearch
 
-epoch = datetime.utcfromtimestamp(0)
-this_run_ts = datetime.now()
-this_run_ts_millis = (this_run_ts - epoch).total_seconds() * 1000.0
 
 # Looks for a list of strings in the body of a page
 #  Returns a dict of the found strings and their value after the ':'
@@ -194,6 +209,10 @@ def ExtractSignals(session, url):
 
 
 def main():
+    epoch = datetime.utcfromtimestamp(0)
+    this_run_ts = datetime.now()
+    this_run_ts_millis = int((this_run_ts - epoch).total_seconds() * 1000.0)
+    print this_run_ts_millis
     # This is a dictionary to compile the stuff we will end up sending up to elasticsearch
     fields = {}
     fields['timestamp'] = this_run_ts_millis
@@ -217,9 +236,13 @@ def main():
         fields.update(ExtractFromTables(s, url))
     fields.update(ExtractSignals(s, 'http://192.168.100.1/cmSignalData.htm'))
     s.close()
-    pprint.pprint(fields)
+
+
     # We are going to store our results in Elasticsearch.
-    #es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+    es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+    json_string = json.dumps(fields)
+    #pprint.pprint(fields)
+    es.index(index = 'surfboard6141', doc_type = 'stats', body = json_string)
 # END def MAIN
 
 if __name__ == '__main__':
