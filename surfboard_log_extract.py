@@ -86,13 +86,13 @@ def ExtractLogs(session, url, last_ts):
                 tz_loc = tz.tzlocal()
                 ts = ts.replace(tzinfo = tz_loc)
                 tsutc = ts.astimezone(tz.tzutc())
+                # Update stored timestamp to our fixed up UTC stamp
+                entry['timestamp'] = tsutc.isoformat()
                 # Have we already recorded this into elastic search?
                 if tsutc <= last_ts:
                     print 'Skipping already recorded entry:'
                     pprint.pprint(entry)
                 else:
-                    # Update stored timestamp to our fixed up UTC stamp
-                    entry['timestamp'] = tsutc.isoformat()
                     print 'Saving for elasticsearch storage:'
                     pprint.pprint(entry)
                     # store to the list we're actually going to return
@@ -115,7 +115,7 @@ def main():
     # We're only puting UTC in and should only be getting UTC out...
     last_ts = last_record['hits']['hits'][0]['_source']['timestamp'].replace('+00:00','')
     last_ts = datetime.strptime(last_ts,'%Y-%m-%dT%H:%M:%S').replace(tzinfo = tz.tzutc())
-    print last_ts
+    print 'last_ts: {}'.format(last_ts)
     fields = ExtractLogs(s, 'http://192.168.100.1/cmLogsData.htm', last_ts)
     s.close()
 
@@ -123,7 +123,7 @@ def main():
         json_string = json.dumps(field)
         print 'Storing to elasticsearch:'
         print json_string
-        #Lets hold off on making our es indexes icky until we test this...
+        # Store our log entry to elasticsearch
         es.index(index = 'surfboard6141_logs', doc_type = 'logs', body = json_string)
 # END def MAIN
 
