@@ -22,6 +22,7 @@ import requests
 import json
 import pprint
 from datetime import datetime
+from dateutil import tz
 from bs4 import BeautifulSoup
 from elasticsearch import Elasticsearch
 
@@ -47,18 +48,42 @@ def ExtractLogs(session, url, last_ts):
                 if len(ftmp) > 0:
                     fields.append(ftmp)
 
-            # initing a valid value for this on the edgecase that earliest log entry is not valid
-            last_ts = datetime.now()
+            last_ts = 'NULL'
             # Moving from oldest to newest
             for entry in reversed(fields):
                 ts = datetime.strptime(entry['timestamp'],'%b %d %Y %H:%M:%S')
                 if str(ts.year) == '1970':
                     epoch = datetime.utcfromtimestamp(0)
                     ts_offset = ts - epoch
-                    ts = last_ts + ts_offset
+                    # Oops, we don't have a last_ts yet.
+                    # Look for a more recent timestamp and work backwards from there.
+                    if str(last_ts) == 'NULL':
+                        for i in reversed(fields):
+                            tc = datetime.strptime(i['timestamp'],'%b %d %Y %H:%M:%S')
+                            if str(tc.year) == '1970':
+                                pass
+                            else:
+                                last_ts = tc
+                                break
+                        # Still nothing?  Ok, manually set it to now.
+                        if str(last_ts) == 'NULL':
+                            last_ts = datetime.now()
+                        # Offset backwards from future ts
+                        ts = last_ts - ts_offset
+                        # Reset this so these don't stack (yes it is inefficient, CPU is cheap, for now...)
+                        last_ts = 'NULL'
+                    else:
+                        # Offset forwards from past ts
+                        ts = last_ts + ts_offset
                 else:
                     last_ts = ts
-                print ts
+                # Now that is sorted, lets make this timezone aware
+                tz_loc = tz.tzlocal()
+                ts = ts.replace(tzinfo = tz_loc)
+                tsutc = ts.astimezone(tz.tzutc())
+                entry['timestamp_utc'] = tsutc.isoformat()
+                #print 'ts: {} / ts_utc: {}'.format(ts, entry['timestamp_utc'])
+
             # drop duplicate entries
 
     return fields
