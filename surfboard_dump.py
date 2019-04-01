@@ -235,7 +235,7 @@ def main():
 
 
     # We are going to store our results in Elasticsearch.
-    es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+    es = Elasticsearch([{'host': '192.168.1.35', 'port': 9200}])
     #pprint.pprint(fields)
     json_string = json.dumps(fields)
     es.index(index = 'surfboard6141', doc_type = 'stats', body = json_string)
