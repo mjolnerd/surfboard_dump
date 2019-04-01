@@ -105,7 +105,7 @@ def ExtractLogs(session, url, last_ts):
 def main():
     fields = []
     # Get the timestamp for the last entry we placed into elasticsearch
-    es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+    es = Elasticsearch([{'host': '192.168.1.35', 'port': 9200}])
 
     # Set up a session for our pull from the modem
     s = requests.session()
