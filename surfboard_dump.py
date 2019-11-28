@@ -165,7 +165,7 @@ def ExtractSignals(session, url):
                 val = cdat[fc]
                 fields[head][channel][labels[fc]] = val
 
-        head = 'Signal Stats'
+        head = 'Signal Status'
         if head in table.get_text() and len(table.findAll('tr')) > 1:
             fields[head] = {}
             # Load up a list of lists with our data
